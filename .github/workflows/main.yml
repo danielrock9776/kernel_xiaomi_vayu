@@ -7,28 +7,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout kernel source
-      uses: actions/checkout@v4
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Set up MemKernel as a module (M-OUT)
-      run: |
-        curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M dogi
+      - name: Set up MemKernel as a module (M-OUT)
+        run: |
+          curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M dogi
 
-    - name: Android kernel build
-      uses: lemniskett/android-kernel-actions@master
-      id: build
-      env:
-        NAME: Loganysl
-      with:
-        arch: arm64
-        compiler: Neutron clang 24
-        defconfig: blossom_defconfig
-        image: Image.gz-dtb
+      - name: Build Kernel with WeebX-Clang
+        uses: dabao1955/kernel_build_action@main
+        with:
+          kernel-url: https://github.com/${{ github.repository }}
+          kernel-branch: ${{ github.ref_name }}
+          config: vayu_defconfig
+          arch: arm64
+          image: Image
+          aosp-clang: false
+          other-clang-url: https://github.com/XSans0/WeebX-Clang/releases/download/WeebX-Clang-19.0.0-release/WeebX-Clang-19.0.0.tar.gz
+          android-ndk: false
+          other-gcc64-url: https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9
+          other-gcc64-branch: lineage-19.1
+          other-gcc32-url: https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9
+          other-gcc32-branch: lineage-19.1
+          anykernel3: true
 
-    - name: Upload Kernel and Module
-      uses: actions/upload-artifact@v4
-      with:
-        name: module
-        path: downloads
-          ${{ steps.build.outputs.outfile }}
-          ./out/drivers/memkernel/memkernel.ko
+      - name: Upload Kernel and Module (Downloadable Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Loganysl-vayu-kernel-and-module
+          path: |
+            build/arch/arm64/boot/Image*
+            build/arch/arm64/boot/dtbo.img
+            build/arch/arm64/boot/dts/qcom/*.dtb
+            **/dogi.ko
+            **/memkernel.ko
+            *.zip
+          if-no-files-found: warn
