@@ -21,7 +21,7 @@ jobs:
         NAME: Loganysl
       with:
         arch: arm64
-        compiler: Neutron-Clang 24.0
+        compiler: Neutron clang 24
         defconfig: blossom_defconfig
         image: Image.gz-dtb
 
